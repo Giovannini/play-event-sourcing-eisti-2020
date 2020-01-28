@@ -5,21 +5,24 @@ import play.api._
 import play.api.mvc._
 
 import models.Product
+import models.commands._
 import services.ProductService
+import services.ProductListProjection
 import play.api.libs.json.Json
 
 @Singleton
 class Shop @Inject()(
   val controllerComponents: ControllerComponents,
-  productService: ProductService
+  productService: ProductService,
+  productListProjection: ProductListProjection
 ) extends BaseController {
 
   def listProducts = Action { request =>
-    Ok(Json.toJson(productService.list))
+    Ok(Json.toJson(productListProjection.list))
   }
 
   def showProduct(id: String) = Action { implicit request =>
-    productService.lookup(id) match {
+    productListProjection.list.find(_.id == id) match {
       case None =>
         NotFound("Not found")
       case Some(product) =>
@@ -33,8 +36,9 @@ class Shop @Inject()(
       name <- (json \ "name").validate[String].asOpt
       price <- (json \ "price").validate[Int].asOpt
     } yield {
+      val command = CreateProduct(name, price)
       val newProduct =
-        productService.addToList(name, price)
+        productService.addToList(command)
       Ok(Json.toJson(newProduct))
     }).getOrElse(BadRequest("Mauvais schéma JSON"))
   }
@@ -45,8 +49,9 @@ class Shop @Inject()(
       name <- (json \ "name").validate[String].asOpt
       price <- (json \ "price").validate[Int].asOpt
     } yield {
+      val command = UpdateProduct(id, name, price)
       val maybeUpdatedProduct =
-        productService.update(id, name, price)
+        productService.update(command)
       maybeUpdatedProduct match {
         case Some(updatedProduct) =>
           Ok(Json.toJson(updatedProduct))
@@ -57,7 +62,8 @@ class Shop @Inject()(
   }
 
   def deleteProduct(id: String) = Action {
-    productService.delete(id) match {
+    val command = DeleteProduct(id)
+    productService.delete(command) match {
       case Some(deletedProduct) =>
         Ok(Json.toJson(deletedProduct))
       case None =>

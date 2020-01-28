@@ -2,5 +2,6 @@ package models.events
 
 case class ProductPriceUpdated(
   id: String,
-  price: Int
+  price: Int,
+  version: Int
 ) extends ProductEvent

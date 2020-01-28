@@ -9,6 +9,7 @@ GET     /hello        controllers.HomeController.hello(name: String, age: Int)
 
 GET     /products     controllers.Shop.listProducts
 GET     /product/:id  controllers.Shop.showProduct(id: String)
++nocsrf
 POST    /product      controllers.Shop.addProduct
 +nocsrf
 PUT     /product/:id  controllers.Shop.updateProduct(id: String)
